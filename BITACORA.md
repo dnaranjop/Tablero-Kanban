@@ -132,3 +132,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Causa probable:
 - Solución aplicada:
 - Evidencia:
+## guardar comits
+git add .
+git commit -m "descripción del cambio"
+git push
