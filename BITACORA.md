@@ -87,6 +87,17 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Commit: {hash corto}
 - Observación técnica: Verificación arquitectónica automatizada con AST. Reemplaza el grep manual por un test que falla si cualquier archivo de src/dominio/ importa Flask, json, requests, sqlalchemy, http, urllib, fastapi, django, pydantic, sqlite3, ni nada de src.aplicacion o src.infraestructura. Funciona como red de seguridad para los pasos 7-13.
 
+### Paso 7 - Definir puerto abstracto RepositorioTablero
+- Fecha: 2026-05-15 HH:MM
+- Archivos modificados:
+  - src/aplicacion/repositorio_tablero.py (nuevo)
+  - pruebas/aplicacion/_init_.py (nuevo, vacío)
+  - pruebas/aplicacion/test_repositorio_tablero_contrato.py (nuevo)
+- Validación ejecutada: python -m pytest pruebas/aplicacion/test_repositorio_tablero_contrato.py -v
+- Resultado: OK (7 passed)
+- Commit: {hash corto}
+- Observación técnica: Puerto abstracto con exactamente cargar() y guardar(tablero), tal como ARCHITECTURE.md §4. Implementado con abc.ABC. El módulo solo depende de stdlib y de src.dominio.tablero. La implementación concreta JSON queda para el PASO 11.
+
 ## 4. Pasos pendientes
 - [x] Paso 1 - Crear estructura de paquetes Python
 - [x] Paso 2 - Implementar enumerado EstadoTarea
@@ -94,7 +105,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - [x] Paso 4 - Implementar entidad Tarea
 - [x] Paso 5 - Implementar aggregate root Tablero
 - [x] Paso 6 - Verificación arquitectónica del dominio
-- [ ] Paso 7 - Definir puerto RepositorioTablero
+- [x] Paso 7 - Definir puerto RepositorioTablero
 - [ ] Paso 8 - Implementar caso de uso CrearTarea
 - [ ] Paso 9 - Implementar caso de uso MoverTarea
 - [ ] Paso 10 - Implementar caso de uso ObtenerTablero
@@ -129,6 +140,11 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Decisión: la prueba arquitectónica prohíbe en el dominio no solo los módulos que aparecen literalmente en ARCHITECTURE.md §6 (flask, json, requests, sqlalchemy, http) sino también urllib, urllib3, aiohttp, httpx, starlette, fastapi, django, pydantic y sqlite3.
 - Justificación: el principio rector de ARCHITECTURE.md §1 es general ("el dominio no conoce HTTP, archivos, JSON ni detalles de interfaz") y TECH_CONSTRAINTS.md §2 prohíbe explícitamente Django, FastAPI y SQLAlchemy. Listar solo los cinco patrones del grep dejaría puertas abiertas (por ejemplo, importar urllib.request cumpliría el grep pero violaría el principio). Ampliar la lista refuerza el espíritu de la regla.
 - Impacto: si un paso futuro intenta meter cualquiera de esos módulos en el dominio, la prueba falla y el commit no se hace. Si el profesor cuestionara la lista, basta argumentar que es un superset estricto de la verificación oficial.
+
+### DEC-06 (paso 7) - Subtipo en memoria _RepositorioEnMemoria vive en las pruebas, no en src/
+- Decisión: la implementación en memoria del puerto se define dentro del archivo de pruebas (pruebas/aplicacion/test_repositorio_tablero_contrato.py) y, en los pasos 8-10, se replicará como fixture compartida en pruebas/aplicacion/.
+- Justificación: src/ contiene únicamente código de producción (puerto abstracto + casos de uso + adaptador real). Un repositorio en memoria mezclado en src/aplicacion/ confundiría capas, y un compañero podría usarlo "por error" en producción. Las pruebas son el único lugar legítimo para dobles.
+- Impacto: en los pasos 8-10 se extraerá el doble a una fixture pytest reutilizable. En src/ nunca habrá implementaciones de puerto distintas a la oficial (JSON, PASO 11).
 
 ## 6. Bloqueos y solución
 
