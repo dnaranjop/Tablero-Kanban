@@ -119,6 +119,27 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Commit: {hash corto}
 - Observación técnica: Caso de uso MoverTarea con la misma forma que CrearTarea (DEC-07). La regla WIP, las transiciones y la existencia de la tarea se delegan íntegramente al aggregate root Tablero. El caso de uso solo orquesta cargar -> mover -> guardar y propaga errores. Soporta estado destino como EstadoTarea o como string canónico (preparación para el PASO 12).
 
+### Paso 10 - Implementar caso de uso ObtenerTablero
+- Fecha: 2026-05-15 HH:MM
+- Archivos modificados:
+  - src/aplicacion/obtener_tablero.py (nuevo)
+  - pruebas/aplicacion/test_obtener_tablero.py (nuevo)
+- Validación ejecutada: python -m pytest pruebas/aplicacion/test_obtener_tablero.py -v
+- Resultado: OK (10 passed)
+- Commit: {hash corto}
+- Observación técnica: Consulta pura: no invoca guardar() bajo ningún flujo. Devuelve un TableroDTO con las tres claves TODO/DOING/DONE siempre presentes. Cada TareaDTO contiene exactamente id_tarea, titulo y estado, todos como strings serializables a JSON. Cierra la capa de aplicación.
+
+### Paso 11 - Implementar adaptador RepositorioTableroJson
+- Fecha: 2026-05-15 HH:MM
+- Archivos modificados:
+  - src/infraestructura/persistencia/repositorio_tablero_json.py (nuevo)
+  - pruebas/infraestructura/_init_.py (nuevo, vacío)
+  - pruebas/infraestructura/test_repositorio_tablero_json.py (nuevo)
+- Validación ejecutada: python -m pytest pruebas/infraestructura/test_repositorio_tablero_json.py -v
+- Resultado: OK (11 passed)
+- Commit: {hash corto}
+- Observación técnica: Primer adaptador de infraestructura. Implementa el puerto RepositorioTablero usando archivo JSON local con stdlib (json + pathlib). La ruta se inyecta por constructor, no se hardcodea. El round-trip conserva el estado y la prueba clave test_wip_se_respeta_a_traves_de_la_persistencia demuestra que INV-01 sobrevive a reinicios.
+
 ## 4. Pasos pendientes
 - [x] Paso 1 - Crear estructura de paquetes Python
 - [x] Paso 2 - Implementar enumerado EstadoTarea
@@ -129,8 +150,8 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - [x] Paso 7 - Definir puerto RepositorioTablero
 - [x] Paso 8 - Implementar caso de uso CrearTarea
 - [x] Paso 9 - Implementar caso de uso MoverTarea
-- [ ] Paso 10 - Implementar caso de uso ObtenerTablero
-- [ ] Paso 11 - Implementar adaptador RepositorioTableroJson
+- [x] Paso 10 - Implementar caso de uso ObtenerTablero
+- [x] Paso 11 - Implementar adaptador RepositorioTableroJson
 - [ ] Paso 12 - Implementar adaptador HTTP Flask
 - [ ] Paso 13 - Implementar frontend Vanilla
 - [ ] Paso 14 - Actualizar README
@@ -176,6 +197,27 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Decisión: MoverTarea.ejecutar normaliza el parámetro estado_destino (acepta EstadoTarea o un string canónico) ANTES de invocar repositorio.cargar(). Si la normalización falla (string desconocido, tipo incorrecto), se propaga ValueError o TypeError sin tocar el repositorio.
 - Justificación: una entrada malformada (típicamente desde HTTP) no debe disparar IO innecesaria. Cargar el tablero solo para descubrir que el estado destino es 'BLOCKED' es desperdicio y dificulta diagnosticar errores. El orden "validar entrada -> tocar IO" es una buena práctica.
 - Impacto: el adaptador HTTP del PASO 12 puede pasar directamente el string del body JSON sin convertirlo; la conversión y el error 400 viven en el caso de uso.
+
+### DEC-09 (paso 10) - DTO con tres claves fijas TODO/DOING/DONE y TypedDict
+- Decisión: ObtenerTablero devuelve un TableroDTO modelado con typing.TypedDict, con las tres claves fijas TODO, DOING y DONE (siempre presentes, incluso vacías). Cada TareaDTO tiene exactamente id_tarea, titulo y estado, todos como strings.
+- Justificación:
+  (a) FEATURE_SPEC_003 AC-01 exige que las tres columnas existan siempre, para que la UI del PASO 13 pueda iterar las tres sin condicionales.
+  (b) UUID y Enum no son serializables nativamente por json.dumps; convertirlos a string en la frontera de aplicación evita que el adaptador HTTP del PASO 12 tenga que conocer estos detalles.
+  (c) TypedDict documenta el contrato al lector y al IDE sin imponer una dependencia runtime nueva (es stdlib).
+- Impacto: el adaptador HTTP del PASO 12 puede devolver el DTO directamente con jsonify(); el frontend del PASO 13 itera 'TODO', 'DOING', 'DONE' como columnas.
+
+### DEC-10 (paso 11) - Esquema JSON versionado y escritura completa
+- Decisión: el archivo JSON incluye un campo "version": 1 y se reescribe completo en cada guardar(). No usamos formato append ni JSON Lines.
+- Justificación:
+  (a) La versión permite cambios futuros del esquema sin romper archivos viejos: el adaptador podría leer v1 y migrar a v2.
+  (b) La escritura completa simplifica enormemente la atomicidad lógica (no quedan estados "a medias" si se interrumpe el guardar mid-operación, en el peor caso el archivo queda con el contenido anterior intacto al usar write_text que es un solo syscall en la práctica).
+  (c) El alcance del proyecto (uso personal local, pocas tareas) hace que el costo de reescribir todo sea despreciable.
+- Impacto: en cada guardar se serializa todo el tablero. Aceptable para este alcance.
+
+### DEC-11 (paso 11) - Ruta del archivo inyectada por constructor
+- Decisión: RepositorioTableroJson(ruta_archivo) recibe la ruta como parámetro obligatorio. No hay valor por defecto hardcodeado.
+- Justificación: TECH_CONSTRAINTS.md §2 prohíbe que el dominio conozca rutas de archivo, y por consistencia tampoco quiero que el adaptador hardcodee una ubicación. El PASO 12 (Flask) decidirá dónde vive el archivo leyendo una variable de entorno o usando un default visible en su propio módulo. Esto mantiene la decisión de ubicación en un solo lugar.
+- Impacto: el PASO 12 declara la ruta del JSON al instanciar el adaptador. Las pruebas usan tmp_path de pytest, lo que aísla cada test.
 
 ## 6. Bloqueos y solución
 
