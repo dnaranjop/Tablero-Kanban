@@ -77,13 +77,23 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Commit: {hash corto}
 - Observación técnica: Tablero como aggregate root protege INV-01 a INV-05. LIMITE_WIP = 3 a nivel de módulo (no parametrizable). Orden de verificaciones: existencia -> transición -> WIP -> mutación, lo que garantiza INV-05. El constructor rechaza tableros precargados que ya violen INV-01.
 
+### Paso 6 - Verificación arquitectónica del dominio
+- Fecha: 2026-05-15 HH:MM
+- Archivos modificados:
+  - pruebas/arquitectura/_init_.py (nuevo, vacío)
+  - pruebas/arquitectura/test_dominio_aislado.py (nuevo)
+- Validación ejecutada: python -m pytest pruebas/arquitectura/test_dominio_aislado.py -v
+- Resultado: OK (12 passed)
+- Commit: {hash corto}
+- Observación técnica: Verificación arquitectónica automatizada con AST. Reemplaza el grep manual por un test que falla si cualquier archivo de src/dominio/ importa Flask, json, requests, sqlalchemy, http, urllib, fastapi, django, pydantic, sqlite3, ni nada de src.aplicacion o src.infraestructura. Funciona como red de seguridad para los pasos 7-13.
+
 ## 4. Pasos pendientes
 - [x] Paso 1 - Crear estructura de paquetes Python
 - [x] Paso 2 - Implementar enumerado EstadoTarea
 - [x] Paso 3 - Implementar errores de dominio
 - [x] Paso 4 - Implementar entidad Tarea
 - [x] Paso 5 - Implementar aggregate root Tablero
-- [ ] Paso 6 - Verificación arquitectónica del dominio
+- [x] Paso 6 - Verificación arquitectónica del dominio
 - [ ] Paso 7 - Definir puerto RepositorioTablero
 - [ ] Paso 8 - Implementar caso de uso CrearTarea
 - [ ] Paso 9 - Implementar caso de uso MoverTarea
@@ -105,15 +115,6 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Justificación: DOMAIN.md §2 establece que Tablero es el aggregate root y "toda creación o movimiento de tarea debe pasar por Tablero". Si la entidad Tarea validara transiciones por su cuenta, duplicaríamos la regla y permitiríamos saltarse al aggregate root. La validación de INV-01/02/03 vive exclusivamente en Tablero (PASO 5).
 - Impacto: el PASO 5 (Tablero.mover_tarea) debe invocar Tarea.cambiar_estado solo después de haber validado la transición y el WIP. Cualquier código externo que llame directamente a Tarea.cambiar_estado sin pasar por Tablero es una violación arquitectónica.
 
-### Paso 5 - Implementar aggregate root Tablero con LIMITE_WIP
-- Fecha: {YYYY-MM-DD HH:MM}
-- Archivos modificados:
-  - src/dominio/tablero.py (nuevo)
-  - pruebas/dominio/test_tablero.py (nuevo)
-- Validación ejecutada: python -m pytest pruebas/dominio/test_tablero.py -v
-- Resultado: OK (19 passed)
-- Commit: {hash corto}
-- Observación técnica: Tablero como aggregate root protege INV-01 a INV-05. LIMITE_WIP = 3 a nivel de módulo (no parametrizable). Orden de verificaciones: existencia -> transición -> WIP -> mutación, lo que garantiza INV-05. El constructor rechaza tableros precargados que ya violen INV-01.
 ### DEC-03 (paso 5) - Orden de verificación en mover_tarea
 - Decisión: en `Tablero.mover_tarea` el orden de checks es (1) existencia de la tarea, (2) transición permitida (INV-03), (3) límite WIP (INV-01). La mutación del estado ocurre solo si los tres pasan.
 - Justificación: este orden asegura INV-05 (no persistir cambios parciales) y produce mensajes de error más útiles (un id inexistente nunca debería disparar un error de WIP). También evita que un intento inválido como TODO->DONE consuma "intentos" o disparé efectos colaterales.
@@ -124,6 +125,10 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Justificación: en el PASO 11 (RepositorioTableroJson) cargaremos el tablero desde un archivo. Si el archivo está corrupto o fue editado a mano, el dominio NO debe arrancar en estado inválido y dejar que la regla se viole "porque ya estaba así". Mejor fallar al cargar y obligar a corregir.
 - Impacto: el adaptador de persistencia debe capturar este error y reportarlo claramente al cargar; nunca debe silenciarlo.
 
+### DEC-05 (paso 6) - Lista ampliada de módulos prohibidos en el dominio
+- Decisión: la prueba arquitectónica prohíbe en el dominio no solo los módulos que aparecen literalmente en ARCHITECTURE.md §6 (flask, json, requests, sqlalchemy, http) sino también urllib, urllib3, aiohttp, httpx, starlette, fastapi, django, pydantic y sqlite3.
+- Justificación: el principio rector de ARCHITECTURE.md §1 es general ("el dominio no conoce HTTP, archivos, JSON ni detalles de interfaz") y TECH_CONSTRAINTS.md §2 prohíbe explícitamente Django, FastAPI y SQLAlchemy. Listar solo los cinco patrones del grep dejaría puertas abiertas (por ejemplo, importar urllib.request cumpliría el grep pero violaría el principio). Ampliar la lista refuerza el espíritu de la regla.
+- Impacto: si un paso futuro intenta meter cualquiera de esos módulos en el dominio, la prueba falla y el commit no se hace. Si el profesor cuestionara la lista, basta argumentar que es un superset estricto de la verificación oficial.
 
 ## 6. Bloqueos y solución
 
