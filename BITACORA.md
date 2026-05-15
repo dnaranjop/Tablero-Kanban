@@ -98,6 +98,27 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Commit: {hash corto}
 - Observación técnica: Puerto abstracto con exactamente cargar() y guardar(tablero), tal como ARCHITECTURE.md §4. Implementado con abc.ABC. El módulo solo depende de stdlib y de src.dominio.tablero. La implementación concreta JSON queda para el PASO 11.
 
+### Paso 8 - Implementar caso de uso CrearTarea
+- Fecha: 2026-05-15 HH:MM
+- Archivos modificados:
+  - src/aplicacion/crear_tarea.py (nuevo)
+  - pruebas/aplicacion/conftest.py (nuevo: fixture repositorio_en_memoria)
+  - pruebas/aplicacion/test_crear_tarea.py (nuevo)
+- Validación ejecutada: python -m pytest pruebas/aplicacion/test_crear_tarea.py -v
+- Resultado: OK (12 passed)
+- Commit: {hash corto}
+- Observación técnica: Caso de uso CrearTarea con inyección de dependencia del puerto. Doble RepositorioTableroEnMemoria como fixture compartida (DEC-06). La validación de INV-04 se delega al dominio; el caso de uso solo orquesta cargar -> crear -> guardar y propaga errores sin persistir cambios parciales.
+
+### Paso 9 - Implementar caso de uso MoverTarea
+- Fecha: 2026-05-15 HH:MM
+- Archivos modificados:
+  - src/aplicacion/mover_tarea.py (nuevo)
+  - pruebas/aplicacion/test_mover_tarea.py (nuevo)
+- Validación ejecutada: python -m pytest pruebas/aplicacion/test_mover_tarea.py -v
+- Resultado: OK (13 passed)
+- Commit: {hash corto}
+- Observación técnica: Caso de uso MoverTarea con la misma forma que CrearTarea (DEC-07). La regla WIP, las transiciones y la existencia de la tarea se delegan íntegramente al aggregate root Tablero. El caso de uso solo orquesta cargar -> mover -> guardar y propaga errores. Soporta estado destino como EstadoTarea o como string canónico (preparación para el PASO 12).
+
 ## 4. Pasos pendientes
 - [x] Paso 1 - Crear estructura de paquetes Python
 - [x] Paso 2 - Implementar enumerado EstadoTarea
@@ -106,8 +127,8 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - [x] Paso 5 - Implementar aggregate root Tablero
 - [x] Paso 6 - Verificación arquitectónica del dominio
 - [x] Paso 7 - Definir puerto RepositorioTablero
-- [ ] Paso 8 - Implementar caso de uso CrearTarea
-- [ ] Paso 9 - Implementar caso de uso MoverTarea
+- [x] Paso 8 - Implementar caso de uso CrearTarea
+- [x] Paso 9 - Implementar caso de uso MoverTarea
 - [ ] Paso 10 - Implementar caso de uso ObtenerTablero
 - [ ] Paso 11 - Implementar adaptador RepositorioTableroJson
 - [ ] Paso 12 - Implementar adaptador HTTP Flask
@@ -146,6 +167,16 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Justificación: src/ contiene únicamente código de producción (puerto abstracto + casos de uso + adaptador real). Un repositorio en memoria mezclado en src/aplicacion/ confundiría capas, y un compañero podría usarlo "por error" en producción. Las pruebas son el único lugar legítimo para dobles.
 - Impacto: en los pasos 8-10 se extraerá el doble a una fixture pytest reutilizable. En src/ nunca habrá implementaciones de puerto distintas a la oficial (JSON, PASO 11).
 
+### DEC-07 (paso 8) - Nombre del método de entrada: ejecutar()
+- Decisión: cada caso de uso expone un único método público llamado ejecutar(...) con la firma propia del caso (CrearTarea.ejecutar(titulo) -> Tarea).
+- Justificación: convención uniforme para los casos de uso de los pasos 9 y 10 (MoverTarea.ejecutar(...), ObtenerTablero.ejecutar(...)). Facilita el mapeo desde el adaptador HTTP del PASO 12: cada endpoint instancia el caso de uso correspondiente, llama a ejecutar(), traduce excepciones a códigos HTTP.
+- Impacto: los pasos 9, 10 y 12 reutilizan esta convención. El adaptador HTTP del PASO 12 podra escribirse de forma muy regular.
+
+### DEC-08 (paso 9) - Normalización del estado destino antes de cargar el tablero
+- Decisión: MoverTarea.ejecutar normaliza el parámetro estado_destino (acepta EstadoTarea o un string canónico) ANTES de invocar repositorio.cargar(). Si la normalización falla (string desconocido, tipo incorrecto), se propaga ValueError o TypeError sin tocar el repositorio.
+- Justificación: una entrada malformada (típicamente desde HTTP) no debe disparar IO innecesaria. Cargar el tablero solo para descubrir que el estado destino es 'BLOCKED' es desperdicio y dificulta diagnosticar errores. El orden "validar entrada -> tocar IO" es una buena práctica.
+- Impacto: el adaptador HTTP del PASO 12 puede pasar directamente el string del body JSON sin convertirlo; la conversión y el error 400 viven en el caso de uso.
+
 ## 6. Bloqueos y solución
 
 ### BLOQ-XX
@@ -157,3 +188,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 git add .
 git commit -m "descripción del cambio"
 git push
+
+python -m pytest pruebas/arquitectura/test_dominio_aislado.py -v  (prueba arquitectonica del dominio)
+
+python -m pytest -v  (comando para todas las pruebas )
