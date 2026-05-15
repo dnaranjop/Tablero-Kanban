@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tablero Kanban Personal</title>
+  <link rel="stylesheet" href="/estilos.css" />
+</head>
+<body>
+  <header class="cabecera">
+    <h1>Tablero Kanban Personal</h1>
+    <p class="subtitulo">Límite WIP: máximo 3 tareas en DOING</p>
+  </header>
+
+  <main>
+    <!-- Formulario de creación -->
+    <section class="formulario-crear" aria-label="Crear nueva tarea">
+      <label for="campo-titulo" class="sr-only">Título de la tarea</label>
+      <input
+        type="text"
+        id="campo-titulo"
+        placeholder="Escribe el título de una nueva tarea"
+        maxlength="200"
+        autocomplete="off"
+      />
+      <button id="boton-crear" type="button">Crear tarea</button>
+    </section>
+
+    <!-- Mensaje de feedback (errores del backend, confirmaciones) -->
+    <div id="mensaje" class="mensaje" role="status" aria-live="polite"></div>
+
+    <!-- Tres columnas Kanban -->
+    <section class="tablero" aria-label="Columnas del tablero">
+      <article class="columna" data-estado="TODO">
+        <h2>TODO</h2>
+        <ul class="lista-tareas" id="columna-TODO"></ul>
+      </article>
+      <article class="columna" data-estado="DOING">
+        <h2>DOING</h2>
+        <ul class="lista-tareas" id="columna-DOING"></ul>
+      </article>
+      <article class="columna" data-estado="DONE">
+        <h2>DONE</h2>
+        <ul class="lista-tareas" id="columna-DONE"></ul>
+      </article>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

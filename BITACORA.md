@@ -12,7 +12,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 ## 3. Pasos ejecutados
 
 ### Paso N - {titulo}
-- Fecha: {YYYY-MM-DD HH:MM}
+- Fecha: 2026-05-14
 - Archivos modificados: {lista}
 - Validación ejecutada: {comando}
 - Resultado: {OK | bloqueo}
@@ -21,7 +21,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 
 
 ### Paso 1 - Crear estructura de paquetes Python
-- Fecha: {YYYY-MM-DD HH:MM}
+- Fecha: 2026-05-14
 - Archivos modificados:
   - src/__init__.py
   - src/dominio/__init__.py
@@ -37,7 +37,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Observación técnica: Esqueleto de paquetes Python listo. Sin lógica de dominio aún; preparado para PASO 2 (EstadoTarea).
 
 ### Paso 2 - Implementar enumerado EstadoTarea
-- Fecha: {YYYY-MM-DD HH:MM}
+- Fecha: 2026-05-14
 - Archivos modificados:
   - src/dominio/estado_tarea.py (nuevo)
   - pruebas/dominio/__init__.py (nuevo, vacío)
@@ -48,7 +48,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Observación técnica: Enumerado de dominio puro, solo usa stdlib (enum). Sin dependencias externas. Verificación arquitectónica grep en src/dominio: sin coincidencias.
 
 ### Paso 3 - Implementar errores de dominio
-- Fecha: {YYYY-MM-DD HH:MM}
+- Fecha: 2026-05-14
 - Archivos modificados:
   - src/dominio/errores.py (nuevo)
   - pruebas/dominio/test_errores.py (nuevo)
@@ -58,7 +58,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Observación técnica: Cuatro errores de DOMAIN.md §4 implementados como subclases de ErrorDominio (raíz semántica). Sin imports externos. Test de cierre verifica que no se añaden errores extra.
 
 ### Paso 4 - Implementar entidad Tarea con validación de título
-- Fecha: {YYYY-MM-DD HH:MM}
+- Fecha: 2026-05-14
 - Archivos modificados:
   - src/dominio/tarea.py (nuevo)
   - pruebas/dominio/test_tarea.py (nuevo)
@@ -68,7 +68,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Observación técnica: Tarea como @dataclass con tres campos exactos (id_tarea, titulo, estado). INV-04 validada en __post_init__. cambiar_estado solo muta; la validación de transiciones queda para el aggregate root en el PASO 5.
 
 ### Paso 5 - Implementar aggregate root Tablero con LIMITE_WIP
-- Fecha: {YYYY-MM-DD HH:MM}
+- Fecha: 2026-05-14
 - Archivos modificados:
   - src/dominio/tablero.py (nuevo)
   - pruebas/dominio/test_tablero.py (nuevo)
@@ -140,6 +140,30 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Commit: {hash corto}
 - Observación técnica: Primer adaptador de infraestructura. Implementa el puerto RepositorioTablero usando archivo JSON local con stdlib (json + pathlib). La ruta se inyecta por constructor, no se hardcodea. El round-trip conserva el estado y la prueba clave test_wip_se_respeta_a_traves_de_la_persistencia demuestra que INV-01 sobrevive a reinicios.
 
+### Paso 12 - Implementar adaptador HTTP Flask
+- Fecha: 2026-05-15 
+- Archivos modificados:
+  - src/infraestructura/http/app.py (nuevo)
+  - pruebas/infraestructura/test_app_http.py (nuevo)
+- Validación ejecutada: python -m pytest pruebas/infraestructura/test_app_http.py -v
+- Resultado: OK (15 passed)
+- Commit: {hash corto}
+- Observación técnica: Tres endpoints REST (GET /api/tablero, POST /api/tareas, PATCH /api/tareas/<id>). El adaptador no contiene logica de negocio: parsea, llama al caso de uso, mapea errores. Los errores de dominio (DEC-01) se traducen a 400/404/409 via errorhandler. El PASO 13 (frontend) se servira como estaticos desde la misma app.
+
+### Paso 13 - Implementar frontend Vanilla
+- Fecha: 2026-05-15 
+- Archivos modificados:
+  - src/infraestructura/frontend/index.html (nuevo)
+  - src/infraestructura/frontend/estilos.css (nuevo)
+  - src/infraestructura/frontend/app.js (nuevo)
+  - pruebas/infraestructura/test_frontend_servido.py (nuevo)
+- Validación ejecutada:
+  - python -m pytest pruebas/infraestructura/test_frontend_servido.py -v
+  - Prueba manual en http://127.0.0.1:5000/: creación, movimiento TODO→DOING, rechazo de cuarta tarea (409 desde backend), DOING→DONE, persistencia tras reinicio.
+- Resultado: OK (8 passed automatizadas + 7 escenarios manuales verificados)
+- Commit: {hash corto}
+- Observación técnica: Frontend en JS Vanilla puro. No replica la regla WIP: la cuarta tarea se rechaza por el backend con 409, y el frontend solo muestra el mensaje devuelto. Pruebas automatizadas verifican ausencia de patrones sospechosos (>= 3, LIMITE_WIP) en app.js. Sin frameworks ni CDNs externos.
+
 ## 4. Pasos pendientes
 - [x] Paso 1 - Crear estructura de paquetes Python
 - [x] Paso 2 - Implementar enumerado EstadoTarea
@@ -152,8 +176,8 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - [x] Paso 9 - Implementar caso de uso MoverTarea
 - [x] Paso 10 - Implementar caso de uso ObtenerTablero
 - [x] Paso 11 - Implementar adaptador RepositorioTableroJson
-- [ ] Paso 12 - Implementar adaptador HTTP Flask
-- [ ] Paso 13 - Implementar frontend Vanilla
+- [x] Paso 12 - Implementar adaptador HTTP Flask
+- [x] Paso 13 - Implementar frontend Vanilla
 - [ ] Paso 14 - Actualizar README
 
 ## 5. Decisiones tomadas
@@ -219,6 +243,21 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Justificación: TECH_CONSTRAINTS.md §2 prohíbe que el dominio conozca rutas de archivo, y por consistencia tampoco quiero que el adaptador hardcodee una ubicación. El PASO 12 (Flask) decidirá dónde vive el archivo leyendo una variable de entorno o usando un default visible en su propio módulo. Esto mantiene la decisión de ubicación en un solo lugar.
 - Impacto: el PASO 12 declara la ruta del JSON al instanciar el adaptador. Las pruebas usan tmp_path de pytest, lo que aísla cada test.
 
+### DEC-12 (paso 12) - Mapeo uniforme de errores de dominio via errorhandler
+- Decisión: usar un único errorhandler de Flask para ErrorDominio (raíz de DEC-01), con un dict _MAPA_ERROR_HTTP que traduce cada subclase al código HTTP correspondiente (400 título inválido, 404 no encontrada, 409 transición y WIP).
+- Justificación: si cada endpoint hiciera try/except sobre cuatro subclases, el adaptador HTTP repetiría logica y se acoplaria a la lista de errores. El errorhandler centralizado mantiene los endpoints limpios (un endpoint = un caso de uso + parsing) y aprovecha la raiz comun DEC-01.
+- Impacto: añadir un nuevo error de dominio en el futuro solo requiere extender _MAPA_ERROR_HTTP; los endpoints no cambian.
+
+### DEC-13 (paso 12) - Configuración de ruta JSON via factoria + variable de entorno
+- Decisión: crear_app(ruta_archivo_json=None) resuelve la ruta en este orden: (1) parametro explicito; (2) variable de entorno TABLERO_RUTA_JSON; (3) fallback './tablero.json'.
+- Justificación: las pruebas usan tmp_path (parametro), el despliegue usa la variable de entorno, y flask run sin configurar usa el fallback. No hay hardcode en el codigo de produccion.
+- Impacto: el PASO 14 (README) documentara la variable de entorno y los pasos para ejecutar flask run en local.
+
+### DEC-14 (paso 13) - El frontend NO replica la regla WIP
+- Decisión: el archivo app.js no contiene ninguna verificación de tipo if (columnaDoing.length >= 3) .... Los botones "Mover a DOING" se renderizan siempre que la tarea esté en TODO; el backend decide si la operación procede.
+- Justificación: CONTEXT.md §7 documenta explícitamente la mitigación "que la regla WIP quede solo en la interfaz". DOMAIN.md §3 INV-01 vive en Tablero. Replicar la regla en JavaScript la dejaría fuera de sincronía si alguien edita el tablero.json a mano, y duplicaría logica de negocio en una capa que TECH_CONSTRAINTS.md considera presentación.
+- Impacto: la cuarta tarea en DOING produce un 409 desde el backend que el frontend muestra como mensaje de error. La prueba test_javascript_no_duplica_la_regla_wip lo verifica automáticamente leyendo el contenido del JS.
+
 ## 6. Bloqueos y solución
 
 ### BLOQ-XX
@@ -227,7 +266,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Solución aplicada:
 - Evidencia:
 ## guardar comits
-----------------------------------------------------
+## --------------OJO COMANDOS MAS COMUNES BORRAR AL FINALIZAR --------------------------------------
 git add .
 git commit -m "descripción del cambio"
 git push
@@ -235,3 +274,6 @@ git push
 python -m pytest pruebas/arquitectura/test_dominio_aislado.py -v  (prueba arquitectonica del dominio)
 
 python -m pytest -v  (comando para todas las pruebas )
+
+set FLASK_APP=src.infraestructura.http.app (comandos para probar la app    http://127.0.0.1:5000/api/tablero)
+python -m flask run

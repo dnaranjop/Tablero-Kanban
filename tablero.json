@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "tareas": [
+    {
+      "id_tarea": "d1b75aab-2b89-4fa1-bb0d-75e7b67500b9",
+      "titulo": "Crear Pan",
+      "estado": "DOING"
+    },
+    {
+      "id_tarea": "fb3f7991-56da-4668-9feb-6af86b582245",
+      "titulo": "inciar trabajo",
+      "estado": "DONE"
+    },
+    {
+      "id_tarea": "12a044e5-76b7-4242-979d-47a5e15269bb",
+      "titulo": "mover tareas ",
+      "estado": "TODO"
+    },
+    {
+      "id_tarea": "0383e175-ef3b-43ee-a5d9-45c2dcbe2240",
+      "titulo": "terminar todo",
+      "estado": "DOING"
+    }
+  ]
+}
