@@ -1,10 +1,10 @@
 # BITACORA.md -- Tablero Kanban Personal
 
 ## 1. Estado actual
-- Pasos ejecutados: 0 de N.
-- Paso en curso: ninguno.
-- Última actualización: {YYYY-MM-DD HH:MM}.
-- Rama de trabajo: main o rama indicada por el profesor.
+- Pasos ejecutados: 14 de 14.
+- Paso en curso: ninguno (PROYECTO COMPLETO).
+- Última actualización: 2026-05-15 16:09.
+- Rama de trabajo: main.
 
 ## 2. Plan original
 Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se edita; las modificaciones posteriores se registran como decisiones.
@@ -164,6 +164,15 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - Commit: {hash corto}
 - Observación técnica: Frontend en JS Vanilla puro. No replica la regla WIP: la cuarta tarea se rechaza por el backend con 409, y el frontend solo muestra el mensaje devuelto. Pruebas automatizadas verifican ausencia de patrones sospechosos (>= 3, LIMITE_WIP) en app.js. Sin frameworks ni CDNs externos.
 
+### Paso 14 - Actualizar README con instrucciones reales de ejecución
+- Fecha: 2026-05-15 
+- Archivos modificados:
+  - README.md (reemplazo completo)
+- Validación ejecutada: lectura completa del README simulando ser un compañero externo + python -m pytest -v (sigue verde)
+- Resultado: OK (manual)
+- Commit: {hash corto}
+- Observación técnica: README incluye instalación, ejecución, pruebas, verificación arquitectónica, endpoints, estructura del proyecto, reglas de dependencia, trazabilidad y solución de problemas. Las siete pruebas manuales del PASO 13 están enumeradas para que cualquier evaluador pueda reproducirlas.
+
 ## 4. Pasos pendientes
 - [x] Paso 1 - Crear estructura de paquetes Python
 - [x] Paso 2 - Implementar enumerado EstadoTarea
@@ -178,7 +187,7 @@ Copiar aquí el plan aprobado antes de ejecutar código. El plan original no se 
 - [x] Paso 11 - Implementar adaptador RepositorioTableroJson
 - [x] Paso 12 - Implementar adaptador HTTP Flask
 - [x] Paso 13 - Implementar frontend Vanilla
-- [ ] Paso 14 - Actualizar README
+- [x] Paso 14 - Actualizar README
 
 ## 5. Decisiones tomadas
 

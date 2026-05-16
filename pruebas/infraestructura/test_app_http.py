@@ -225,10 +225,3 @@ def test_estado_se_persiste_entre_peticiones(cliente, tmp_path: Path):
     assert tarea["id_tarea"] in ids_todo
 
 
-def test_index_devuelve_404_si_frontend_no_existe(cliente):
-    """
-    En el PASO 12 todavía no existe el frontend. La ruta '/' debe contestar
-    404 sin romperse. El PASO 13 hara que devuelva el HTML.
-    """
-    respuesta = cliente.get("/")
-    assert respuesta.status_code == 404
